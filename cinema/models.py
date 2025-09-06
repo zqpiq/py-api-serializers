@@ -37,8 +37,8 @@ class Actor(models.Model):
 
 class Movie(models.Model):
     title = models.CharField(max_length=255)
-    description = models.TextField()
-    duration = models.IntegerField()
+    description = models.TextField(blank=False, null=False)
+    duration = models.IntegerField(blank=False, null=False)
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
 

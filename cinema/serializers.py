@@ -15,7 +15,7 @@ class ActorSerializer(serializers.ModelSerializer):
         model = Actor
         fields = ("id", "first_name", "last_name", "full_name")
 
-    def get_full_name(self, obj):
+    def get_full_name(self, obj) -> str:
         return f"{obj.first_name} {obj.last_name}"
 
 
@@ -38,26 +38,40 @@ class MovieListSerializer(serializers.ModelSerializer):
     genres = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
-    actors = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="full_name"
+    actors = serializers.SerializerMethodField(
+        method_name="get_full_name", read_only=True
     )
 
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
+
+    def get_full_name(self, obj) -> list[str]:
+        return [f"{actor.first_name} {actor.last_name}" for actor in obj.actors.all()]
 
 
 class MovieRetrieveSerializer(serializers.ModelSerializer):
     genres = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Genre.objects.all()
+        many=True,
+        queryset=Genre.objects.all(),
+        required=False
     )
     actors = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Actor.objects.all()
+        many=True,
+        queryset=Actor.objects.all(),
+        required=False
     )
 
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
+
+    def to_representation(self, instance):
+        """Customize the output to show full genre and actor info"""
+        ret = super().to_representation(instance)
+        ret['genres'] = GenreSerializer(instance.genres.all(), many=True).data
+        ret['actors'] = ActorSerializer(instance.actors.all(), many=True).data
+        return ret
 
 
 class MovieSessionListSerializer(serializers.ModelSerializer):
@@ -90,14 +104,14 @@ class MovieSessionDetailSerializer(serializers.ModelSerializer):
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
 
-    def get_movie(self, obj):
+    def get_movie(self, obj) -> dict:
         return {
             "id": obj.movie.id,
             "title": obj.movie.title,
             "description": obj.movie.description,
             "duration": obj.movie.duration,
             "genres": [genre.name for genre in obj.movie.genres.all()],
-            "actors": [actor.full_name for actor in obj.movie.actors.all()],
+            "actors": [f"{actor.first_name} {actor.last_name}" for actor in obj.movie.actors.all()],
         }
 
 
