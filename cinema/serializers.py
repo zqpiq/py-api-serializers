@@ -47,7 +47,8 @@ class MovieListSerializer(serializers.ModelSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
     def get_full_name(self, obj) -> list[str]:
-        return [f"{actor.first_name} {actor.last_name}" for actor in obj.actors.all()]
+        return [f"{actor.first_name} {actor.last_name}"
+                for actor in obj.actors.all()]
 
 
 class MovieRetrieveSerializer(serializers.ModelSerializer):
@@ -67,10 +68,9 @@ class MovieRetrieveSerializer(serializers.ModelSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
     def to_representation(self, instance):
-        """Customize the output to show full genre and actor info"""
         ret = super().to_representation(instance)
-        ret['genres'] = GenreSerializer(instance.genres.all(), many=True).data
-        ret['actors'] = ActorSerializer(instance.actors.all(), many=True).data
+        ret["genres"] = GenreSerializer(instance.genres.all(), many=True).data
+        ret["actors"] = ActorSerializer(instance.actors.all(), many=True).data
         return ret
 
 
@@ -111,7 +111,8 @@ class MovieSessionDetailSerializer(serializers.ModelSerializer):
             "description": obj.movie.description,
             "duration": obj.movie.duration,
             "genres": [genre.name for genre in obj.movie.genres.all()],
-            "actors": [f"{actor.first_name} {actor.last_name}" for actor in obj.movie.actors.all()],
+            "actors": [f"{actor.first_name} {actor.last_name}"
+                       for actor in obj.movie.actors.all()],
         }
 
 
