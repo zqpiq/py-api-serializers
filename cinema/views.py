@@ -5,10 +5,11 @@ from cinema.serializers import (
     ActorSerializer,
     CinemaHallSerializer,
     MovieListSerializer,
-    MovieSerializer,
     MovieRetrieveSerializer,
     MovieSessionListSerializer,
-    MovieSessionDetailSerializer, MovieSessionRetrieveSerializer,
+    MovieSessionDetailSerializer,
+    MovieSessionRetrieveSerializer,
+    MovieCreateUpdateSerializer,
 )
 
 
@@ -30,22 +31,20 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
 
-    def get_serializer_class(self) -> type[serializers.Serializer]:
+    def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
-        if self.action in ("retrieve", "create", "update", "partial_update"):
+        if self.action == "retrieve":
             return MovieRetrieveSerializer
-        return MovieSerializer
+        return MovieCreateUpdateSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.action in ("list", "retrieve"):
-            return queryset.prefetch_related("genres", "actors")
+        queryset = Movie.objects.prefetch_related("genres", "actors")
         return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.none()
 
     def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "list":
@@ -55,8 +54,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionRetrieveSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.action in ("list", "retrieve"):
-            return (queryset.select_related("movie", "cinema_hall").
-                    prefetch_related("movie__genres", "movie__actors"))
+        queryset = (MovieSession.objects.select_related("movie", "cinema_hall")
+                    .prefetch_related("movie__genres", "movie__actors"))
         return queryset

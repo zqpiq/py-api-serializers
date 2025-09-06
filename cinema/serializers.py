@@ -39,39 +39,38 @@ class MovieListSerializer(serializers.ModelSerializer):
         many=True, read_only=True, slug_field="name"
     )
     actors = serializers.SerializerMethodField(
-        method_name="get_full_name", read_only=True
+        method_name="get_actors", read_only=True
     )
 
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
-    def get_full_name(self, obj) -> list[str]:
+    def get_actors(self, obj) -> list[str]:
         return [f"{actor.first_name} {actor.last_name}"
                 for actor in obj.actors.all()]
 
 
 class MovieRetrieveSerializer(serializers.ModelSerializer):
-    genres = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Genre.objects.all(),
-        required=False
-    )
-    actors = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Actor.objects.all(),
-        required=False
-    )
+    genres = GenreSerializer(many=True, read_only=True)
+    actors = ActorSerializer(many=True, read_only=True)
 
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
-    def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        ret["genres"] = GenreSerializer(instance.genres.all(), many=True).data
-        ret["actors"] = ActorSerializer(instance.actors.all(), many=True).data
-        return ret
+
+class MovieCreateUpdateSerializer(serializers.ModelSerializer):
+    genres = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Genre.objects.all()
+    )
+    actors = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Actor.objects.all()
+    )
+
+    class Meta:
+        model = Movie
+        fields = ("title", "description", "duration", "genres", "actors")
 
 
 class MovieSessionListSerializer(serializers.ModelSerializer):
